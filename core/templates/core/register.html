@@ -1,0 +1,159 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="glass-card p-4 p-md-5 mb-5 mt-4">
+            <h2 class="fw-bold mb-4 border-bottom pb-3"><i class="fa-solid fa-user-plus text-primary me-2"></i>Student Registration Form</h2>
+            
+            <form method="POST" action="{% url 'student_register' %}" id="regForm">
+                {% csrf_token %}
+                <input type="hidden" name="photo_data" id="photo_data" required>
+
+                <div class="row g-4">
+                    <!-- Left Column: Personal Details -->
+                    <div class="col-md-7">
+                        <h5 class="fw-bold text-secondary mb-3">Personal Information</h5>
+                        
+                        <div class="row g-3">
+                            <div class="col-sm-12">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                            
+                            <div class="col-sm-6">
+                                <label class="form-label">Enrollment Number</label>
+                                <input type="text" class="form-control" name="enrollment_number" required placeholder="e.g. CS2024001">
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" name="password" required placeholder="Create a strong password">
+                            </div>
+                            
+                            <div class="col-sm-12">
+                                <label class="form-label">Class / Course</label>
+                                <input type="text" class="form-control" name="student_class" required placeholder="e.g. B.Tech CS 2nd Year">
+                            </div>
+
+                            <div class="col-sm-12">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" name="email" required placeholder="We will send a confirmation here">
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label class="form-label">Student Mobile Number</label>
+                                <input type="tel" class="form-control" name="mobile_number" required>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label class="form-label">Parent's Mobile Number</label>
+                                <input type="tel" class="form-control" name="parent_number" required>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label class="form-label">Parent's Email Address</label>
+                                <input type="email" class="form-control" name="parent_email" required placeholder="For notifications">
+                            </div>
+
+                            <div class="col-sm-12">
+                                <label class="form-label">Complete Address</label>
+                                <textarea class="form-control" name="address" rows="2" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Webcam Capture -->
+                    <div class="col-md-5 border-start ps-md-4">
+                        <h5 class="fw-bold text-secondary mb-3">Live Face Capture</h5>
+                        <p class="small text-muted mb-2">Please look directly at the camera. This photo will be used for attendance recognition.</p>
+                        
+                        <div class="webcam-container mb-3" style="aspect-ratio: 4/3;">
+                            <video id="webcamVideo" autoplay muted playsinline class="w-100 h-100 object-fit-cover"></video>
+                            <canvas id="photoCanvas" class="d-none w-100 h-100 object-fit-cover position-absolute top-0 start-0"></canvas>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary" id="startCamBtn"><i class="fa-solid fa-video me-2"></i>Start Camera</button>
+                            <button type="button" class="btn btn-primary d-none" id="captureBtn"><i class="fa-solid fa-camera me-2"></i>Capture Photo</button>
+                            <button type="button" class="btn btn-warning d-none" id="retakeBtn"><i class="fa-solid fa-rotate-right me-2"></i>Retake Photo</button>
+                        </div>
+                        
+                        <div class="alert alert-danger mt-3 d-none" id="camError">
+                            Could not access camera. Please check permissions.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 border-top pt-4 text-end">
+                    <button type="submit" class="btn btn-success btn-lg px-5 shadow" id="submitBtn" disabled>
+                        Register Student <i class="fa-solid fa-check ms-2"></i>
+                    </button>
+                    <p class="small text-muted mt-2">Submit button will enable after capturing a photo.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const video = document.getElementById('webcamVideo');
+    const canvas = document.getElementById('photoCanvas');
+    const startCamBtn = document.getElementById('startCamBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const photoDataInput = document.getElementById('photo_data');
+    const camError = document.getElementById('camError');
+    let stream = null;
+
+    startCamBtn.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            startCamBtn.classList.add('d-none');
+            captureBtn.classList.remove('d-none');
+            camError.classList.add('d-none');
+        } catch (err) {
+            console.error("Camera access error:", err);
+            camError.classList.remove('d-none');
+        }
+    });
+
+    captureBtn.addEventListener('click', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        photoDataInput.value = dataUrl;
+        
+        video.classList.add('d-none');
+        canvas.classList.remove('d-none');
+        
+        captureBtn.classList.add('d-none');
+        retakeBtn.classList.remove('d-none');
+        submitBtn.disabled = false;
+        
+        // Stop camera to save resources
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+
+    retakeBtn.addEventListener('click', async () => {
+        canvas.classList.add('d-none');
+        video.classList.remove('d-none');
+        photoDataInput.value = "";
+        submitBtn.disabled = true;
+        
+        retakeBtn.classList.add('d-none');
+        startCamBtn.click(); // Restart camera
+    });
+});
+</script>
+{% endblock %}

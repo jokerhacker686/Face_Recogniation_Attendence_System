@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row align-items-center mt-5">
+    <div class="col-md-6 text-center text-md-start mb-4 mb-md-0">
+        <h1 class="display-4 fw-bold text-primary mb-3">Next-Gen Face Recognition Attendance</h1>
+        <p class="lead text-secondary mb-4">Secure, fast, and automated attendance management system using advanced AI facial recognition technology.</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4 me-md-2">Login to Portal</a>
+            <a href="{% url 'student_register' %}" class="btn btn-outline-secondary btn-lg px-4">Register as Student</a>
+        </div>
+    </div>
+    <div class="col-md-6 text-center">
+        <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Biometric Scanner" class="img-fluid rounded-4 shadow-lg" style="max-height: 400px; object-fit: cover;">
+    </div>
+</div>
+{% endblock %}

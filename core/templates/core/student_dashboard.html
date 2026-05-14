@@ -1,0 +1,239 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="glass-card p-4 text-center">
+            {% if student.photo %}
+                <img src="{{ student.photo.url }}" alt="Profile Photo" class="rounded-circle mb-3 border border-3 border-primary" style="width: 150px; height: 150px; object-fit: cover;">
+            {% else %}
+                <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3 text-white" style="width: 150px; height: 150px; font-size: 50px;">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            {% endif %}
+            
+            <h4 class="fw-bold">{{ user.first_name }}</h4>
+            <p class="text-muted mb-1">{{ student.enrollment_number }}</p>
+            <span class="badge bg-primary">{{ student.student_class }}</span>
+        </div>
+        
+        <div class="glass-card p-4 mt-4">
+            <h5 class="fw-bold border-bottom pb-2 mb-3">Contact Info</h5>
+            <p class="mb-2"><i class="fa-solid fa-envelope text-primary me-2"></i> {{ user.email }}</p>
+            <p class="mb-2"><i class="fa-solid fa-phone text-primary me-2"></i> {{ student.mobile_number }}</p>
+            <p class="mb-2"><i class="fa-solid fa-phone-volume text-primary me-2"></i> {{ student.parent_number }} (Parent)</p>
+            <p class="mb-0"><i class="fa-solid fa-location-dot text-primary me-2"></i> {{ student.address }}</p>
+        </div>
+
+        <!-- Face Recognition Button -->
+        <div class="glass-card p-4 mt-4 text-center">
+            <button class="btn btn-success w-100 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#faceRecognitionModal">
+                <i class="fa-solid fa-camera me-2"></i>Mark Attendance with Face
+            </button>
+            {% if today_attendance %}
+                <p class="text-success small mt-2">
+                    <i class="fa-solid fa-check-circle me-1"></i>
+                    {% if today_attendance.status == 'present' %}
+                        Present Today ✓
+                    {% elif today_attendance.status == 'leave' %}
+                        Leave Marked
+                    {% else %}
+                        Absent Today
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="glass-card p-4 h-100">
+            <h4 class="fw-bold mb-4"><i class="fa-solid fa-calendar-check text-success me-2"></i>Attendance Overview</h4>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-sm-4">
+                    <div class="bg-light p-3 rounded text-center border">
+                        <h2 class="text-success fw-bold">{{ attendance_percentage }}%</h2>
+                        <p class="text-muted mb-0 small">Total Attendance</p>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="bg-light p-3 rounded text-center border">
+                        <h2 class="text-primary fw-bold">{{ present_count }}</h2>
+                        <p class="text-muted mb-0 small">Days Present</p>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="bg-light p-3 rounded text-center border">
+                        <h2 class="text-danger fw-bold">{{ absent_count }}</h2>
+                        <p class="text-muted mb-0 small">Days Absent</p>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="bg-light p-3 rounded text-center border">
+                        <h2 class="text-warning fw-bold">{{ leave_count }}</h2>
+                        <p class="text-muted mb-0 small">Total Classes: {{ total_classes }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold mb-3">Recent Attendance Records</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Face Verified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                            <tr>
+                                <td>{{ record.date|date:"d M Y" }}</td>
+                                <td>
+                                    {% if record.status == 'present' %}
+                                        <span class="badge bg-success">Present</span>
+                                    {% elif record.status == 'leave' %}
+                                        <span class="badge bg-warning">Leave</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Absent</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.face_recognized %}
+                                        <i class="fa-solid fa-check text-success"></i> Yes
+                                    {% else %}
+                                        <i class="fa-solid fa-times text-danger"></i> No
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No attendance records yet. Start by marking your attendance!</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted small mt-2"><i class="fa-solid fa-circle-info me-1"></i>Attendance is marked using Face Recognition technology for verification.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Face Recognition Modal -->
+<div class="modal fade" id="faceRecognitionModal" tabindex="-1" aria-labelledby="faceRecognitionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="faceRecognitionLabel"><i class="fa-solid fa-face-smile me-2"></i>Face Recognition Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="camera-container" class="text-center mb-3">
+                    <video id="video" width="400" height="300" style="border: 2px solid #007bff; border-radius: 10px; display: none;"></video>
+                    <canvas id="canvas" width="400" height="300" style="display: none;"></canvas>
+                    <div id="loading-spinner" class="spinner-border" role="status" style="display: none;">
+                        <span class="visually-hidden">Loading camera...</span>
+                    </div>
+                </div>
+                <p class="text-center text-muted mb-3">Position your face in the frame and click "Capture & Mark Attendance"</p>
+                <form id="attendance-form" method="POST" action="{% url 'api_mark_attendance' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="face_image" name="face_image">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="capture-btn" style="display: none;">
+                    <i class="fa-solid fa-camera me-2"></i>Capture & Mark Attendance
+                </button>
+                <button type="button" class="btn btn-success" id="start-camera-btn">
+                    <i class="fa-solid fa-play me-2"></i>Start Camera
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+    let video, canvas, ctx;
+    let cameraActive = false;
+
+    document.getElementById('start-camera-btn').addEventListener('click', function() {
+        video = document.getElementById('video');
+        canvas = document.getElementById('canvas');
+        ctx = canvas.getContext('2d');
+        
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            document.getElementById('loading-spinner').style.display = 'inline-block';
+            
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    video.play();
+                    document.getElementById('loading-spinner').style.display = 'none';
+                    document.getElementById('start-camera-btn').style.display = 'none';
+                    document.getElementById('capture-btn').style.display = 'block';
+                    cameraActive = true;
+                })
+                .catch(function(err) {
+                    alert('Error accessing camera: ' + err.message);
+                    document.getElementById('loading-spinner').style.display = 'none';
+                });
+        } else {
+            alert('Your browser does not support camera access.');
+        }
+    });
+
+    document.getElementById('capture-btn').addEventListener('click', function() {
+        if (cameraActive && video) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            
+            const faceImageData = canvas.toDataURL('image/jpeg');
+            document.getElementById('face_image').value = faceImageData;
+            
+            // Send attendance data via AJAX
+            fetch("{% url 'api_mark_attendance' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    face_image: faceImageData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ ' + data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('faceRecognitionModal')).hide();
+                    // Refresh page to show updated attendance
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('✗ ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error marking attendance. Please try again.');
+            });
+        }
+    });
+
+    // Cleanup camera when modal is closed
+    document.getElementById('faceRecognitionModal').addEventListener('hidden.bs.modal', function() {
+        if (video && video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.style.display = 'none';
+            document.getElementById('start-camera-btn').style.display = 'block';
+            document.getElementById('capture-btn').style.display = 'none';
+            cameraActive = false;
+        }
+    });
+</script>
+{% endblock %}

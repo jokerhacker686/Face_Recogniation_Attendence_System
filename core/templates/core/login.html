@@ -1,0 +1,58 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="glass-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="fa-solid fa-user-lock fs-3"></i>
+                </div>
+                <h2 class="fw-bold">Secure Login</h2>
+                <p class="text-muted">Access your AuraSense dashboard</p>
+            </div>
+
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">I am a...</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check flex-fill border rounded p-2 ps-4" style="cursor: pointer;">
+                            <input class="form-check-input" type="radio" name="login_type" id="typeStudent" value="student" checked>
+                            <label class="form-check-label w-100" for="typeStudent" style="cursor: pointer; margin-bottom: 0;">Student</label>
+                        </div>
+                        <div class="form-check flex-fill border rounded p-2 ps-4" style="cursor: pointer;">
+                            <input class="form-check-input" type="radio" name="login_type" id="typeEmployee" value="employee">
+                            <label class="form-check-label w-100" for="typeEmployee" style="cursor: pointer; margin-bottom: 0;">Employee / Admin</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="user_id" class="form-label fw-bold">ID Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fa-solid fa-id-card"></i></span>
+                        <input type="text" class="form-control" id="user_id" name="user_id" placeholder="Enrollment / Employee ID" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="form-label fw-bold">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fa-solid fa-key"></i></span>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold fs-5 shadow-sm mb-3">Login to Portal</button>
+
+                <div class="text-center mt-3 border-top pt-3">
+                    <p class="text-muted mb-1">Are you a new student?</p>
+                    <a href="{% url 'student_register' %}" class="btn btn-outline-secondary w-100 fw-bold">Register with Live Photo Here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
